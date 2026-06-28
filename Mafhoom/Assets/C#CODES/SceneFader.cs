@@ -8,10 +8,17 @@ public class SceneFader : MonoBehaviour
     [SerializeField] private Image fadeOverlay;
     [SerializeField] private float fadeDuration = 0.35f;
 
+    private static SceneFader _instance;
     private bool isTransitioning;
 
     private void Awake()
     {
+        if (_instance != null && _instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        _instance = this;
         DontDestroyOnLoad(gameObject);
 
         if (fadeOverlay != null)
@@ -39,8 +46,20 @@ public class SceneFader : MonoBehaviour
             SetAlpha(Mathf.Clamp01(t / fadeDuration));
             yield return null;
         }
+        SetAlpha(1f);
 
         SceneManager.LoadScene(sceneName);
+        yield return null;
+
+        t = 0f;
+        while (t < fadeDuration)
+        {
+            t += Time.unscaledDeltaTime;
+            SetAlpha(Mathf.Clamp01(1f - t / fadeDuration));
+            yield return null;
+        }
+        SetAlpha(0f);
+        isTransitioning = false;
     }
 
     private void SetAlpha(float a)
